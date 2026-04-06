@@ -41,8 +41,8 @@ jobs:
         echo "Generating regression test report..."
         # 生成测试报告
     
-    - name: Comment PR (if failed)
-      if: failure()
+    - name: Comment PR (if failed and is PR)
+      if: failure() && github.event_name == 'pull_request'
       uses: actions/github-script@v6
       with:
         script: |
@@ -53,8 +53,8 @@ jobs:
             body: '❌ 回归测试失败，请修复后再合并\n\n请检查：\n1. 单元测试是否通过\n2. 是否破坏了现有功能\n3. 测试报告详情'
           })
     
-    - name: Comment PR (if success)
-      if: success()
+    - name: Comment PR (if success and is PR)
+      if: success() && github.event_name == 'pull_request'
       uses: actions/github-script@v6
       with:
         script: |
