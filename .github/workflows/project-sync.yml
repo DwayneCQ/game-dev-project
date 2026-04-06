@@ -1,0 +1,61 @@
+name: Project Sync to Discord
+
+on:
+  project_card:
+    types: [moved]
+  issues:
+    types: [opened, closed]
+  pull_request:
+    types: [opened, closed]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Send Discord notification
+      if: github.event_name == 'project_card'
+      run: |
+        curl -X POST ${{ secrets.DISCORD_WEBHOOK_AUTOMATION }} \
+          -H "Content-Type: application/json" \
+          -d '{
+            "content": "🤖 [项目更新] 任务状态变更",
+            "embeds": [{
+              "title": "任务状态更新",
+              "description": "任务卡片已移动",
+              "color": 3447003,
+              "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
+            }]
+          }'
+    
+    - name: Notify PR opened
+      if: github.event_name == 'pull_request' && github.event.action == 'opened'
+      run: |
+        curl -X POST ${{ secrets.DISCORD_WEBHOOK_AUTOMATION }} \
+          -H "Content-Type: application/json" \
+          -d '{
+            "content": "🤖 [GitHub] 新PR提交 @GD-pm",
+            "embeds": [{
+              "title": "PR #'${{ github.event.pull_request.number }}': '${{ github.event.pull_request.title }}'",
+              "url": "'${{ github.event.pull_request.html_url }}'",
+              "description": "请进行代码审查",
+              "color": 15158332,
+              "author": {
+                "name": "'${{ github.event.pull_request.user.login }}'"
+              }
+            }]
+          }'
+    
+    - name: Notify PR merged
+      if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged
+      run: |
+        curl -X POST ${{ secrets.DISCORD_WEBHOOK_AUTOMATION }} \
+          -H "Content-Type: application/json" \
+          -d '{
+            "content": "🤖 [GitHub] PR已合并 @GD-pm",
+            "embeds": [{
+              "title": "PR #'${{ github.event.pull_request.number }}': '${{ github.event.pull_request.title }}'",
+              "description": "已合并到main分支，请分配新任务",
+              "color": 3066993
+            }]
+          }'

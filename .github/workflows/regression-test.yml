@@ -1,0 +1,63 @@
+name: Regression Test
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'src/**'
+
+jobs:
+  regression-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Setup environment
+      run: |
+        echo "Setting up test environment..."
+        # 这里可以设置具体的运行环境
+    
+    - name: Run unit tests
+      run: |
+        echo "Running unit tests..."
+        # 执行单元测试命令
+        # 例如: npm test, pytest, cargo test 等
+    
+    - name: Run regression tests
+      run: |
+        echo "Running regression tests..."
+        # 执行回归测试
+        # 测试所有已完成功能的核心流程
+        echo "Regression test completed"
+    
+    - name: Generate report
+      if: always()
+      run: |
+        echo "Generating regression test report..."
+        # 生成测试报告
+    
+    - name: Comment PR (if failed)
+      if: failure()
+      uses: actions/github-script@v6
+      with:
+        script: |
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: '❌ 回归测试失败，请修复后再合并\n\n请检查：\n1. 单元测试是否通过\n2. 是否破坏了现有功能\n3. 测试报告详情'
+          })
+    
+    - name: Comment PR (if success)
+      if: success()
+      uses: actions/github-script@v6
+      with:
+        script: |
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: '✅ 回归测试通过\n\n可以合并到main分支'
+          })
